@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend para API FastAPI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .response {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Teste da API FastAPI</h1>
+
+        <!-- Formulário de Login -->
+        <div class="form-group">
+            <h2>Login</h2>
+            <label for="username">Usuário:</label>
+            <input type="text" id="username" placeholder="Usuário">
+            <label for="password">Senha:</label>
+            <input type="password" id="password" placeholder="Senha">
+            <button onclick="login()" id="btn-login">Login</button>
+            <div class="response" id="login-response"></div>
+        </div>
+
+        <!-- Endpoint Protegido -->
+        <div class="form-group">
+            <h2>Endpoint Protegido</h2>
+            <button onclick="testarEndpointProtegido()" id="btn-endpoint-protegido" class="disabled">Testar Endpoint Protegido</button>
+            <div class="response" id="endpoint-protegido-response"></div>
+        </div>
+
+        <!-- Classificar Texto -->
+        <div class="form-group">
+            <h2>Classificar Texto</h2>
+            <textarea id="texto-classificar" placeholder="Digite o texto para classificar"></textarea>
+            <button onclick="classificarTexto()" id="btn-classificar-texto" class="disabled">Classificar Texto</button>
+            <div class="response" id="classificar-texto-response"></div>
+        </div>
+
+        <!-- Analisar Sentimento -->
+        <div class="form-group">
+            <h2>Analisar Sentimento</h2>
+            <textarea id="texto-sentimento" placeholder="Digite o texto para análise de sentimento"></textarea>
+            <button onclick="analisarSentimento()" id="btn-analisar-sentimento" class="disabled">Analisar Sentimento</button>
+            <div class="response" id="analisar-sentimento-response"></div>
+        </div>
+
+        <!-- Analisar Entidades -->
+        <div class="form-group">
+            <h2>Analisar Entidades</h2>
+            <textarea id="texto-entidades" placeholder="Digite o texto para análise de entidades"></textarea>
+            <button onclick="analisarEntidades()" id="btn-analisar-entidades" class="disabled">Analisar Entidades</button>
+            <div class="response" id="analisar-entidades-response"></div>
+        </div>
+
+        <!-- Traduzir Texto -->
+        <div class="form-group">
+            <h2>Traduzir Texto</h2>
+            <textarea id="texto-traduzir" placeholder="Digite o texto para tradução"></textarea>
+            <label for="idioma-destino">Idioma de Destino (ex: en, es, fr):</label>
+            <input type="text" id="idioma-destino" placeholder="Idioma de destino">
+            <button onclick="traduzirTexto()" id="btn-traduzir-texto" class="disabled">Traduzir Texto</button>
+            <div class="response" id="traduzir-texto-response"></div>
+        </div>
+
+        <!-- Chatbot -->
+        <div class="form-group">
+            <h2>Chatbot</h2>
+            <textarea id="texto-chatbot" placeholder="Digite uma mensagem para o chatbot"></textarea>
+            <button onclick="interagirChatbot()" id="btn-chatbot" class="disabled">Interagir com Chatbot</button>
+            <div class="response" id="chatbot-response"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:8000"; // Altere se necessário
+        let token = ""; // Variável global para armazenar o token JWT
+
+        // Função para habilitar/desabilitar botões
+        function atualizarBotoes() {
+            const botoes = document.querySelectorAll("button:not(#btn-login)"); // Todos os botões, exceto o de login
+            if (token) {
+                botoes.forEach(btn => btn.classList.remove("disabled")); // Habilita os botões
+            } else {
+                botoes.forEach(btn => btn.classList.add("disabled")); // Desabilita os botões
+            }
+        }
+
+        // Função para fazer login
+        async function login() {
+            console.log("Função login chamada.");
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            console.log("Enviando requisição para /v1/login...");
+            try {
+                const response = await fetch(`${API_URL}/v1/login`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro na requisição: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Resposta recebida:", data);
+
+                // Exibe uma mensagem de sucesso ao invés do token
+                if (data.access_token) {
+                    token = data.access_token; // Armazena o token
+                    document.getElementById("login-response").innerText = "Login realizado com sucesso!";
+                    atualizarBotoes(); // Habilita os botões após o login
+                } else {
+                    document.getElementById("login-response").innerText = "Erro: Token não recebido.";
+                }
+            } catch (error) {
+                console.error("Erro:", error);
+                document.getElementById("login-response").innerText = `Erro: ${error.message}`;
+            }
+        }
+
+        // Função para testar o endpoint protegido
+        async function testarEndpointProtegido() {
+            console.log("Função testarEndpointProtegido chamada.");
+
+            console.log("Enviando requisição para /v1/endpoint_protegido...");
+            try {
+                const response = await fetch(`${API_URL}/v1/endpoint_protegido`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro na requisição: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Resposta recebida:", data);
+                document.getElementById("endpoint-protegido-response").innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error("Erro:", error);
+                document.getElementById("endpoint-protegido-response").innerText = `Erro: ${error.message}`;
+            }
+        }
+
+        // Função para classificar texto
+        async function classificarTexto() {
+            console.log("Função classificarTexto chamada.");
+            const texto = document.getElementById("texto-classificar").value;
+
+            console.log("Enviando requisição para /v1/classificar_texto...");
+            try {
+                const response = await fetch(`${API_URL}/v1/classificar_texto`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ texto })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro na requisição: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Resposta recebida:", data);
+                document.getElementById("classificar-texto-response").innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error("Erro:", error);
+                document.getElementById("classificar-texto-response").innerText = `Erro: ${error.message}`;
+            }
+        }
+
+        // Função para analisar sentimento
+        async function analisarSentimento() {
+            console.log("Função analisarSentimento chamada.");
+            const texto = document.getElementById("texto-sentimento").value;
+
+            console.log("Enviando requisição para /v1/analisar_sentimento...");
+            try {
+                const response = await fetch(`${API_URL}/v1/analisar_sentimento`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ texto })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro na requisição: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Resposta recebida:", data);
+                document.getElementById("analisar-sentimento-response").innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error("Erro:", error);
+                document.getElementById("analisar-sentimento-response").innerText = `Erro: ${error.message}`;
+            }
+        }
+
+        // Função para analisar entidades
+        async function analisarEntidades() {
+            console.log("Função analisarEntidades chamada.");
+            const texto = document.getElementById("texto-entidades").value;
+
+            console.log("Enviando requisição para /v1/analisar_entidades...");
+            try {
+                const response = await fetch(`${API_URL}/v1/analisar_entidades`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ texto })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro na requisição: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Resposta recebida:", data);
+                document.getElementById("analisar-entidades-response").innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error("Erro:", error);
+                document.getElementById("analisar-entidades-response").innerText = `Erro: ${error.message}`;
+            }
+        }
+
+        // Função para traduzir texto
+        async function traduzirTexto() {
+            console.log("Função traduzirTexto chamada.");
+            const texto = document.getElementById("texto-traduzir").value;
+            const destino = document.getElementById("idioma-destino").value;
+
+            console.log("Enviando requisição para /v1/traduzir...");
+            try {
+                const response = await fetch(`${API_URL}/v1/traduzir?destino=${destino}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ texto })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro na requisição: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Resposta recebida:", data);
+                document.getElementById("traduzir-texto-response").innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error("Erro:", error);
+                document.getElementById("traduzir-texto-response").innerText = `Erro: ${error.message}`;
+            }
+        }
+
+        // Função para interagir com o chatbot
+        async function interagirChatbot() {
+            console.log("Função interagirChatbot chamada.");
+            const texto = document.getElementById("texto-chatbot").value;
+
+            console.log("Enviando requisição para /v1/chatbot...");
+            try {
+                const response = await fetch(`${API_URL}/v1/chatbot`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ texto })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro na requisição: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Resposta recebida:", data);
+                document.getElementById("chatbot-response").innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error("Erro:", error);
+                document.getElementById("chatbot-response").innerText = `Erro: ${error.message}`;
+            }
+        }
+
+        // Inicializa os botões como desabilitados (exceto o de login)
+        atualizarBotoes();
+    </script>
+</body>
+</html>
